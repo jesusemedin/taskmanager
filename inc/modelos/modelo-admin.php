@@ -56,12 +56,25 @@ if($accion === 'login'){
         $stmt->bind_result($nombre_usuario, $id_usuario, $pass_usuario);
         $stmt->fetch();
         if($nombre_usuario){
-            $respuesta = array(
-                'respuesta' => 'correcto',
-                'nombre' => $nombre_usuario,
-                'id' => $id_usuario,
-                'pass' => $pass_usuario,
-            );
+            // SI EL USUARIO EXISTE VERIFICAR EL PASSWORD
+            if(password_verify($password, $pass_usuario)){
+                // INICAR LA SESION
+                session_start();
+                $_SESSION['nombre'] = $usuario;
+                $_SESSION['id'] = $id_usuario;
+                $_SESSION['login'] = true;
+                // LOGIN CORRECTO
+                $respuesta = array(
+                    'respuesta' => 'correcto',
+                    'nombre' => $nombre_usuario,
+                    'tipo' => $accion
+                );
+            } else {
+                // LOGIN INCORRECTO
+                $respuesta = array (
+                    'resultado' => 'Password incorrecto'
+                );
+            }
         } else {
             $respuesta = array(
                 'error' => 'Usuario no existe'
