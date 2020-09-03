@@ -8,6 +8,9 @@ function eventListeners(){
 
     // BOTON PARA UNA NUEVA TAREA
     document.querySelector('.nueva-tarea').addEventListener('click', agregarTarea);
+
+    // BOTONES PARA LAS ACCIONES DE LAS TAREAS
+    document.querySelector('.listado-pendientes').addEventListener('click', accionesTareas)
 }
 
 function nuevoProyecto(e){
@@ -189,4 +192,104 @@ function agregarTarea(e){
         // ENVIAR LA CONSULTA CON XHR.SEND
         xhr.send(datos);
     }
+}
+
+// CAMBIA EL ESTADO DE LAS TAREAS O LAS ELIMINA
+function accionesTareas(e){
+    e.preventDefault();
+
+    // EN ESTA SECCION VAMOS A PROBAR EL DELEGATION
+    // CON TARGET SE TIENE ACCESO A QUE ELEMENTO EL USUARIO ESTA HACIENDO CLICK
+    if (e.target.classList.contains('fa-check-circle')) {
+        if (e.target.classList.contains('completo')) {
+            e.target.classList.remove('completo');
+            cambiarEstadoTarea(e.target, 0);
+        } else {
+            e.target.classList.add('completo');
+            cambiarEstadoTarea(e.target, 1);
+        }
+    }
+
+    if (e.target.classList.contains('fa-trash')) {
+        Swal.fire({
+            title: 'Seguro (a)?',
+            text: "Esta accion no se puede deshacer",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Si, borrar',
+            cancelButtonText: 'Cancelar'
+          }).then((result) => {
+            if (result.value) {
+
+                var tareaEliminar = e.target.parentElement.parentElement;
+                // BORRAR DE LA BASE DE DATOS
+                eliminarTareaDB(tareaEliminar);
+
+                // BORRAR DEL HTML
+                tareaEliminar.remove();
+
+              Swal.fire(
+                'ELiminado',
+                'La tarea fue eliminado',
+                'success'
+              )
+            }
+          })
+    }
+}
+
+// COMPLETA O DESCOMPLETA UNA TAREA
+function cambiarEstadoTarea(tarea, estado){
+    var idTarea = tarea.parentElement.parentElement.id.split(':');
+    
+    // CREAR LLAMADO A AJAX
+    var xhr = new XMLHttpRequest;
+
+    // INFORMACION O DATOS
+    var datos = new FormData();
+    datos.append('id', idTarea[1]);
+    datos.append('accion', 'actualizar');
+    datos.append('estado', estado);
+
+    // OPEN LA CONEXIION
+    xhr.open('POST', 'inc/modelos/modelo-tareas.php', true);
+
+    // ON LOAD
+    xhr.onload = function () {
+        if(this.status === 200){
+            console.log(JSON.parse(xhr.responseText));
+        }
+    }
+
+    // ENVIAR LA PETICION
+    xhr.send(datos);
+
+}
+
+// ELIMINA LAS TAREAS DE LA BASE DE DATOS
+function eliminarTareaDB(tarea){
+    var idTarea = tarea.id.split(':');
+    
+    // CREAR LLAMADO A AJAX
+    var xhr = new XMLHttpRequest;
+
+    // INFORMACION O DATOS
+    var datos = new FormData();
+    datos.append('id', idTarea[1]);
+    datos.append('accion', 'eliminar');
+
+    // OPEN LA CONEXIION
+    xhr.open('POST', 'inc/modelos/modelo-tareas.php', true);
+
+    // ON LOAD
+    xhr.onload = function () {
+        if(this.status === 200){
+            console.log(JSON.parse(xhr.responseText));
+        }
+    }
+
+    // ENVIAR LA PETICION
+    xhr.send(datos);
 }
